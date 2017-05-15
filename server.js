@@ -29,6 +29,10 @@ app.get('/api/v1/search/:game', function(req, res) {
   IgdbAPI.gamesSearch(req, res);
 });
 
+app.get('/api/v1/fetchPlatforms/:offset', function (req, res) {
+  IgdbAPI.getRemotePlatforms(req, res);
+});
+
 const server = app.listen(3000, function() {
   const port = server.address().port;
   console.log('listening @ localhost:' + port);

@@ -2,13 +2,16 @@
 
 const axios = require('axios');
 const Game = require('./models/game');
+const Platform = require('./models/platform');
 
 const IgdbAPI = {
 
   baseURL: "https://igdbcom-internet-game-database-v1.p.mashape.com",
   searchRoute: "/games",
+  platformsRoute: "/platforms",
 
   gamesSearch: function (req, res) {
+    /*
     IgdbAPI.localGameSearch(req.params.game)
       .then((games) => {
         // if games.length > 0 && games.length < limit
@@ -30,6 +33,13 @@ const IgdbAPI = {
             });
         }
       })
+      .catch(function (error) {
+        console.log(error);
+      });
+     */
+    IgdbAPI.remoteGameSearch(req.params.game)
+      .then(IgdbAPI.saveSearchResults)
+      .then(games => res.status(200).json({ games: games }))
       .catch(function (error) {
         console.log(error);
       });
@@ -85,7 +95,11 @@ const IgdbAPI = {
     })
   },
   createGame: function (gameData) {
-    let platforms = [];
+    let platforms = new Set();
+    for(let i = 0; i < gameData.release_dates.length; i++) {
+      platforms.add(gameData.release_dates[i].platform);
+    }
+    const platformsArr = [...platforms];
 
     let game = new Game({
       igdb_id:                  gameData.id,
@@ -95,14 +109,61 @@ const IgdbAPI = {
       igdb_release_date:        gameData.release_date,
       igdb_summary:             gameData.summary,
       igdb_release_dates:       gameData.release_dates,
-      igdb_platforms:           platforms,
       igdb_developers:          gameData.developers,
       igdb_publishers:          gameData.publishers,
       igdb_cover:               gameData.cover,
-      igdb_popularity:          gameData.popularity
+      platforms:                platformsArr
     });
 
     return game;
+  },
+  remotePlatformFetch: function (offset) {
+    const fields = "/?fields=name,alternative_name";
+    const limit = "&limit=50";
+    const offsetParam = `&offset=${offset}`;
+
+    const requestURL = `${IgdbAPI.baseURL}${IgdbAPI.platformsRoute}${fields}${limit}${offsetParam}`;
+
+    return axios.get(requestURL, {
+      headers: {
+        'X-Mashape-Key': 'Mbdgn3uSLGmshtPQy8REhgo185VCp1ACZ71jsn7kHzoUrEj3Ln',
+        'Accept': 'application/json'
+      }
+    });
+  },
+  savePlatforms: function (results) {
+    const platformsData = results.data;
+    let platformsArr = [];
+    for (let i = 0; i < platformsData.length; i++) {
+      let currentPlatform = platformsData[i];
+      let platform = IgdbAPI.createPlatform(currentPlatform);
+      platformsArr.push(platform);
+    }
+
+    return new Promise((resolve, reject) => {
+      Platform.insertMany(platformsArr, function(err, docs) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(docs);
+        }
+      });
+    });
+  },
+  createPlatform: function (platformData) {
+    let platform = new Platform({
+      igdb_id:                platformData.id,
+      igdb_name:              platformData.name,
+      igdb_alternative_name:  platformData.alternative_name
+    });
+
+    return platform;
+  },
+  getRemotePlatforms: function (req, res) {
+    IgdbAPI.remotePlatformFetch(req.params.offset)
+    .then(IgdbAPI.savePlatforms)
+    .then(platforms => res.json({ success: "true", documentsAdded: platforms.length }))
+    .catch(error => console.log(error));
   }
 };
 

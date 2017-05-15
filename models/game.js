@@ -11,11 +11,10 @@ const gameSchema = new mongoose.Schema({
   igdb_summary:             String,
   igdb_first_release_date:  Number,
   igdb_release_dates:       [],
-  igdb_platforms:           [],
   igdb_developers:          [],
   igdb_publishers:          [],
   igdb_cover:               {},
-  igdb_popularity:          Number
+  platforms:                [],
 });
 
 module.exports = mongoose.model('Game', gameSchema);
