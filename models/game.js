@@ -14,12 +14,8 @@ const gameSchema = new mongoose.Schema({
   igdb_platforms:           [],
   igdb_developers:          [],
   igdb_publishers:          [],
-  igdb_cover:               {
-                              url: String,
-                              width: Number,
-                              height: Number,
-                              id: String
-                            }
+  igdb_cover:               {},
+  igdb_popularity:          Number
 });
 
 module.exports = mongoose.model('Game', gameSchema);

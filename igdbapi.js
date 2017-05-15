@@ -9,25 +9,60 @@ const IgdbAPI = {
   searchRoute: "/games",
 
   gamesSearch: function (req, res) {
-    // check db for games based on search term
-    // if results of a certain number exist in db, return results
-    // if results are less make request to IGDB API, return results
-    IgdbAPI.remoteGameSearch(req.params.game)
-      .then(function (results) {
-        res.status(200).json({ games: results.data });
+    IgdbAPI.localGameSearch(req.params.game)
+      .then((games) => {
+        // if games.length > 0 && games.length < limit
+        // - perform remote search with offset of (limit - games.length)
+        // - save new results to db
+        // - return local results that equal limit
+        // if games.length >= limit
+        // - return only local results
+        // if games.length == 0
+        // - perform remote search and save
+        if (games.length > 0) {
+          res.status(200).json({ games: games });
+        } else {
+          IgdbAPI.remoteGameSearch(req.params.game)
+            .then(IgdbAPI.saveSearchResults)
+            .then(games => res.status(200).json({ games: games }))
+            .catch(function (error) {
+              console.log(error);
+            });
+        }
       })
       .catch(function (error) {
         console.log(error);
       });
   },
   localGameSearch: function (gameTitle) {
-    // text search on Game model
+    let query = Game.find(
+      { $text: { $search: gameTitle } }, 
+      { score: { $meta: "textScore" } }
+    ).sort({ score: { $meta: "textScore" } });
+
+    var gamesFindPromise = query.exec();
+    return gamesFindPromise;
   },
-  saveSearchResults: function (searchResultGamesResponse) {
-    // save API results to db
+  saveSearchResults: function (results) {
+    const gamesData = results.data;
+    let gamesArr = [];
+    for (let i = 0; i < gamesData.length; i++) {
+      let currentGame = gamesData[i];
+      let game = IgdbAPI.createGame(currentGame);
+      gamesArr.push(game);
+    }
+
+    return new Promise((resolve, reject) => {
+      Game.insertMany(gamesArr, function(err, docs) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(docs);
+        }
+      });
+    })
   },
   remoteGameSearch: function (gameTitle) {
-    // API request to IGDB API
     const gameName = gameTitle;
 
     let formattedGameName = gameName;
@@ -51,9 +86,6 @@ const IgdbAPI = {
   },
   createGame: function (gameData) {
     let platforms = [];
-    for (let j = 0; j < gameData.release_dates.length; j++) {
-      platforms.push(gameData.release_dates[j].platform);
-    }
 
     let game = new Game({
       igdb_id:                  gameData.id,
@@ -66,7 +98,8 @@ const IgdbAPI = {
       igdb_platforms:           platforms,
       igdb_developers:          gameData.developers,
       igdb_publishers:          gameData.publishers,
-      igdb_cover:               gameData.cover
+      igdb_cover:               gameData.cover,
+      igdb_popularity:          gameData.popularity
     });
 
     return game;
