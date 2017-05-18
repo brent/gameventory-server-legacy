@@ -59,18 +59,39 @@ const IgdbAPI = {
     for (let i = 0; i < gamesData.length; i++) {
       let currentGame = gamesData[i];
       let game = IgdbAPI.createGame(currentGame);
+
+      Game.findOne({ igdb_id: game.igdb_id }, function (err, g) {
+        if (err) { console.log(err); }
+        if (g) {
+          return;
+        } else {
+          game.save();
+        }
+      });
+
       gamesArr.push(game);
     }
 
     return new Promise((resolve, reject) => {
-      Game.insertMany(gamesArr, function(err, docs) {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(docs);
-        }
+      if (gamesArr.length > 0) {
+        resolve(gamesArr);
+      } else {
+        reject('error');
+      }
+    });
+
+    /*
+    return new Promise((resolve, reject) => {
+      // errors on duplicate insert
+      Game.insertMany(gamesArr, { ordered: false })
+      .then(function (docs) {
+        resolve(docs);
+      })
+      .catch(function(err) {
+        reject(err);
       });
-    })
+    });
+    */
   },
   remoteGameSearch: function (gameTitle) {
     const gameName = gameTitle;
@@ -96,8 +117,10 @@ const IgdbAPI = {
   },
   createGame: function (gameData) {
     let platforms = new Set();
-    for(let i = 0; i < gameData.release_dates.length; i++) {
-      platforms.add(gameData.release_dates[i].platform);
+    if (gameData.release_dates) {
+      for(let i = 0; i < gameData.release_dates.length; i++) {
+        platforms.add(gameData.release_dates[i].platform);
+      }
     }
     const platformsArr = [...platforms];
 
