@@ -29,9 +29,12 @@ module.exports = function(app, passport) {
   app.post('/api/v1/signup', 
     passport.authenticate('signup', { session: false }),
     function (req, res) {
+    console.log(res);
     res.status(200).json({
       success:   req.success,
       message:   req.message,
+      userId:    req.userId,
+      username:  req.username,
       token:     req.token
     });
   });
@@ -39,9 +42,12 @@ module.exports = function(app, passport) {
   app.post('/api/v1/login',
     passport.authenticate('login', { session: false }),
     function (req, res) {
+    console.log(res);
     res.status(200).json({
       success:   req.success,
       message:   req.message,
+      userId:    req.userId,
+      username:  req.username,
       token:     req.token
     });
   });

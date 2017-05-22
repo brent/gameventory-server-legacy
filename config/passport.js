@@ -30,7 +30,11 @@ module.exports = function(passport) {
         req.message = 'user created successfully';
 
         const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET);
+        // TODO: Don't attach this to the req
+        // passport sends a user object back
         req.token = token;
+        req.userId = newUser._id;
+        req.username = newUser.username;
 
         return done(null, newUser);
       });
@@ -58,6 +62,8 @@ module.exports = function(passport) {
 
             const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
             req.token = token;
+            req.userId = user._id;
+            req.username = user.username;
 
             return done(null, user);
           } else {
