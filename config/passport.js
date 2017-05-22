@@ -6,11 +6,11 @@ const jwt = require('jsonwebtoken');
 
 module.exports = function(passport) {
   passport.use('signup', new LocalStrategy({
-    usernameField:     'email',
+    usernameField:     'username',
     passwordField:     'password',
     passReqToCallback: true
-  }, function(req, email, password, done) {
-    User.findOne({ 'email': email }, function(err, user) {
+  }, function(req, username, password, done) {
+    User.findOne({ 'username': username }, function(err, user) {
       if (err) { return done(err); }
 
       if (user) { 
@@ -20,7 +20,7 @@ module.exports = function(passport) {
       }
 
       const newUser = new User();
-      newUser.email = email;
+      newUser.username = username;
       newUser.password = password;
 
       newUser.save(function (err) {
@@ -38,11 +38,11 @@ module.exports = function(passport) {
   }));
 
   passport.use('login', new LocalStrategy({
-    usernameField:     'email',
+    usernameField:     'username',
     passwordField:     'password',
     passReqToCallback: true
-  }, function(req, email, password, done) {
-    User.findOne({ 'email': email }, function (err, user) {
+  }, function(req, username, password, done) {
+    User.findOne({ 'username': username }, function (err, user) {
       if (err) { return done(err); }
       if (!user) { 
         req.success = false;

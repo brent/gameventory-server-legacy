@@ -1,6 +1,6 @@
 "use strict";
 
-const IgdbAPI   = require('../IgdbAPI');
+const IgdbAPI   = require('../igdbapi');
 const isLoggedIn = require('../routes/helpers').isLoggedIn;
 
 module.exports = function(app, passport) {
