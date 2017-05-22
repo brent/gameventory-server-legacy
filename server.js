@@ -1,11 +1,16 @@
 "use strict";
 
-const express = require('express');
-const app = express();
-const morgan = require('morgan');
+require('dotenv').config();
 
-const db = require('./config/db');
-const IgdbAPI = require('./IgdbAPI');
+const express     = require('express');
+const app         = express();
+const morgan      = require('morgan');
+const passport    = require('passport');
+const db          = require('./config/db');
+const bodyParser  = require('body-parser');
+
+// passport strategies
+require('./config/passport')(passport);
 
 // disallows Express detection
 app.disable('x-powered-by');
@@ -13,25 +18,14 @@ app.disable('x-powered-by');
 // enables request logging
 app.use(morgan('dev'));
 
-app.use(function(req, res, next) {
-  // ENABLE CORS FOR ALL REQUESTS
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  next();
-});
+// allow express to parse request body
+app.use(bodyParser.urlencoded({ extended: false }));
 
-app.get('/', function(req, res) {
-  res.status(200).json({ "message": "hello world" });
-});
+// ... initialize passport
+app.use(passport.initialize());
 
-app.get('/api/v1/search/:game', function(req, res) {
-  IgdbAPI.gamesSearch(req, res);
-});
-
-app.get('/api/v1/fetchPlatforms/:offset', function (req, res) {
-  IgdbAPI.getRemotePlatforms(req, res);
-});
+// pass in app and passport to routes
+require('./routes')(app, passport);
 
 const server = app.listen(3000, function() {
   const port = server.address().port;
