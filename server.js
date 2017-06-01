@@ -21,6 +21,9 @@ app.use(morgan('dev'));
 // allow express to parse request body
 app.use(bodyParser.urlencoded({ extended: false }));
 
+// allows express to parse json request body
+app.use(bodyParser.json());
+
 // ... initialize passport
 app.use(passport.initialize());
 

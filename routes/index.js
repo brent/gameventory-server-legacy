@@ -2,6 +2,7 @@
 
 const IgdbAPI   = require('../igdbapi');
 const isLoggedIn = require('../routes/helpers').isLoggedIn;
+const Gameventory = require('../models/gameventory');
 
 module.exports = function(app, passport) {
   app.use(function(req, res, next) {
@@ -19,8 +20,9 @@ module.exports = function(app, passport) {
   app.get('/api/v1/search/:game', 
     isLoggedIn,
     function(req, res) {
-    IgdbAPI.gamesSearch(req, res);
-  });
+      IgdbAPI.gamesSearch(req, res);
+    }
+  );
 
   app.get('/api/v1/fetchPlatforms/:offset', function (req, res) {
     IgdbAPI.getRemotePlatforms(req, res);
@@ -29,26 +31,120 @@ module.exports = function(app, passport) {
   app.post('/api/v1/signup', 
     passport.authenticate('signup', { session: false }),
     function (req, res) {
-    console.log(res);
-    res.status(200).json({
-      success:   req.success,
-      message:   req.message,
-      userId:    req.userId,
-      username:  req.username,
-      token:     req.token
-    });
+      res.status(200).json({
+        success:   req.success,
+        message:   req.message,
+        userId:    req.userId,
+        username:  req.username,
+        token:     req.token
+      }
+    );
   });
 
   app.post('/api/v1/login',
     passport.authenticate('login', { session: false }),
     function (req, res) {
-    console.log(res);
-    res.status(200).json({
-      success:   req.success,
-      message:   req.message,
-      userId:    req.userId,
-      username:  req.username,
-      token:     req.token
-    });
+      res.status(200).json({
+        success:   req.success,
+        message:   req.message,
+        userId:    req.userId,
+        username:  req.username,
+        token:     req.token
+      }
+    );
   });
+
+  app.get('/api/v1/gameventory',
+    isLoggedIn,
+    function (req, res) {
+      let userId = req.user._id;
+      Gameventory.findOne({ "user.id": userId }, function (err, gameventory) {
+        if (err) {
+          res.status(200).json({
+            success: false,
+            message: "problem with mongo"
+          });
+          console.log(err);
+        }
+
+        if (gameventory) {
+          res.status(200).json({
+            success: true,
+            games: gameventory.games
+          });
+        } else {
+          res.status(200).json({
+            success: false,
+            message: "gameventory not found"
+          });
+        }
+      });
+    }
+  );
+
+  app.post('/api/v1/gameventory',
+    isLoggedIn,
+    function (req, res) {
+      let userId = req.body.user.id;
+      Gameventory.findOne({ "user.id": userId }, function (err, gameventory) {
+        if (err) {
+          res.status(200).json({
+            success: false,
+            message: "problem with mongo"
+          });
+        }
+
+        if (gameventory) {
+          gameventory.games = req.body.games;
+          gameventory.save(function (err, updatedGameventory) {
+            if (err) {
+              res.status(200).json({
+                success: false,
+                message: "problem with mongo"
+              });
+            }
+
+            if (updatedGameventory) {
+              res.status(200).json({
+                success: true,
+                message: "gameventory updated successfully",
+                games: updatedGameventory.games
+              });
+            } else {
+              res.status(200).json({
+                success: false,
+                message: "gameventory could not be updated"
+              });
+            }
+          });
+        } else {
+          let newGameventory = new Gameventory();
+          newGameventory.user = req.body.user;
+          newGameventory.games = req.body.games;
+
+          newGameventory.save(function (err, newGameventory) {
+            if (err) {
+              res.status(200).json({
+                success: false,
+                message: "problem with mongo"
+              });
+            }
+
+            if (newGameventory) {
+              res.status(200).json({
+                success: true,
+                message: "gameventory saved successfully",
+                games: newGameventory.games
+              });
+            } else {
+              res.status(200).json({
+                success: false,
+                message: "gameventory could not be saved"
+              });
+            }
+          });
+        }
+      });
+    }
+  );
 };
