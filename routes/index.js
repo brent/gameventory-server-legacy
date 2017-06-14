@@ -3,6 +3,7 @@
 const IgdbAPI   = require('../igdbapi');
 const isLoggedIn = require('../routes/helpers').isLoggedIn;
 const Gameventory = require('../models/gameventory');
+const User = require('../models/user');
 
 module.exports = function(app, passport) {
   app.use(function(req, res, next) {
@@ -21,6 +22,60 @@ module.exports = function(app, passport) {
     isLoggedIn,
     function(req, res) {
       IgdbAPI.gamesSearch(req, res);
+    }
+  );
+
+  app.get('/api/v1/users',
+    isLoggedIn,
+    function(req, res) {
+      User.find({ username: { $regex: req.query.q } }, function (err, users) {
+        if (err) {
+          res.status(200).json({
+            success: false,
+            message: "problem with mongo"
+          });
+          console.log(err);
+        }
+
+        if (users) {
+          res.status(200).json({
+            success: true,
+            users: users
+          });
+        } else {
+          res.status(200).json({
+            success: false,
+            message: "no users found"
+          });
+        }
+      });
+    }
+  );
+
+  app.get('/api/v1/users/:username',
+    isLoggedIn,
+    function (req, res) {
+      Gameventory.find({ 'user.username': req.params.username }, function (err, gameventory) {
+        if (err) {
+          res.status(200).json({
+            success: false,
+            message: "mongodb error",
+            error: err
+          });
+        }
+
+        if (gameventory) {
+          res.status(200).json({
+            success: true,
+            gameventory: gameventory
+          });
+        } else {
+          res.status(200).json({
+            success: false,
+            message: "couldn't find gameventory for user"
+          });
+        }
+      });
     }
   );
 

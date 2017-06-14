@@ -6,8 +6,8 @@ mongoose.Promise = global.Promise;
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-  email:    String,
-  username: String,
+  //email:    { type: String, unique: true },
+  username: { type: String, unique: true },
   password: String
 });
 

@@ -187,6 +187,8 @@ const IgdbAPI = {
     .then(IgdbAPI.savePlatforms)
     .then(platforms => res.json({ success: "true", documentsAdded: platforms.length }))
     .catch(error => console.log(error));
+  },
+  usersSearch: function (req, res) {
   }
 };
 
