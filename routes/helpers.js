@@ -35,7 +35,7 @@ const routeHelpers = {
         if (!user) {
           return res.status(401).json({
             success: false,
-            message: "user not found"
+            message: "you must log in; user not found"
           });
         }
 

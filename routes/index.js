@@ -4,6 +4,7 @@ const IgdbAPI   = require('../igdbapi');
 const isLoggedIn = require('../routes/helpers').isLoggedIn;
 const Gameventory = require('../models/gameventory');
 const User = require('../models/user');
+const Event = require('../models/event');
 
 module.exports = function(app, passport) {
   app.use(function(req, res, next) {
@@ -28,6 +29,7 @@ module.exports = function(app, passport) {
   app.get('/api/v1/users',
     isLoggedIn,
     function(req, res) {
+      console.log(req.query.q);
       User.find({ username: { $regex: req.query.q } }, function (err, users) {
         if (err) {
           res.status(200).json({
@@ -55,7 +57,7 @@ module.exports = function(app, passport) {
   app.get('/api/v1/users/:username',
     isLoggedIn,
     function (req, res) {
-      Gameventory.find({ 'user.username': req.params.username }, function (err, gameventory) {
+      Gameventory.findOne({ 'user.username': req.params.username }, function (err, gameventory) {
         if (err) {
           res.status(200).json({
             success: false,
@@ -67,7 +69,8 @@ module.exports = function(app, passport) {
         if (gameventory) {
           res.status(200).json({
             success: true,
-            gameventory: gameventory
+            user: gameventory.user,
+            games: gameventory.games
           });
         } else {
           res.status(200).json({
@@ -140,6 +143,7 @@ module.exports = function(app, passport) {
   app.post('/api/v1/gameventory',
     isLoggedIn,
     function (req, res) {
+      console.log(req.body);
       let userId = req.body.user.id;
       Gameventory.findOne({ "user.id": userId }, function (err, gameventory) {
         if (err) {
@@ -160,6 +164,16 @@ module.exports = function(app, passport) {
             }
 
             if (updatedGameventory) {
+              let event = new Event({
+                actor: req.body.event.actor,
+                target: req.body.event.target,
+                type: req.body.event.type,
+                message: req.body.event.message
+              });
+
+              event.save(function (err, savedEvent) {
+                if (err) { console.log('could not save event', event) }
+              });
               res.status(200).json({
                 success: true,
                 message: "gameventory updated successfully",
@@ -186,6 +200,17 @@ module.exports = function(app, passport) {
             }
 
             if (newGameventory) {
+              let event = new Event({
+                actor: req.body.event.actor,
+                target: req.body.event.target,
+                type: req.body.event.type,
+                message: req.body.event.message
+              });
+
+              event.save(function (err, savedEvent) {
+                if (err) { console.log('could not save event', event) }
+              });
+
               res.status(200).json({
                 success: true,
                 message: "gameventory saved successfully",
@@ -202,4 +227,32 @@ module.exports = function(app, passport) {
       });
     }
   );
+
+  app.get('/api/v1/feed', 
+    isLoggedIn,
+    function (req, res) {
+      Event.find({}, function (err, events) {
+        if (err) {
+          res.status(200).json({
+            success: false,
+            message: "problem with mongo"
+          });
+        }
+
+        if (events) {
+          res.status(200).json({
+            success: true,
+            message: "events found",
+            events: events
+          });
+        } else {
+          res.status(200).json({
+            success: false,
+            message: "events couldn't be found",
+          });
+        }
+      });
+    }
+  );
+
 };
