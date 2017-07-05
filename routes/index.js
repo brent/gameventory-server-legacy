@@ -251,27 +251,89 @@ module.exports = function(app, passport) {
   app.get('/api/v1/feed', 
     isLoggedIn,
     function (req, res) {
-      Event.find({}).sort({ $natural: -1 }).limit(100).exec(function (err, events) {
-        if (err) {
-          res.status(200).json({
-            success: false,
-            message: "problem with mongo"
-          });
-        }
+      const uid = req.user.id;
+      if (req.query.scope == "following") {
+        Follow.find({ uid: uid }, function (err, follows) {
+          if (err) {
+            res.status(200).json({
+              success: false,
+              message: "problem with mongo"
+            });
+          }
 
-        if (events) {
-          res.status(200).json({
-            success: true,
-            message: "events found",
-            events: events
-          });
-        } else {
-          res.status(200).json({
-            success: false,
-            message: "events couldn't be found",
-          });
-        }
-      });
+          if (follows) {
+            let followsArr = [];
+            follows.forEach(function (follow) {
+              followsArr.push(follow.fid);
+            });
+
+            Event.find({ $or:
+                [ 
+                  { 
+                    $and: [ 
+                      { type: { $regex: /FOLLOW/ } }, 
+                      { target: { $in: followsArr }, actor: { $ne: uid } } 
+                    ]
+                  },
+                  { 
+                    $and: [
+                      { type: { $regex: /GAME/ } },
+                      { actor: { $ne: uid } }
+                    ]
+                  }
+                ]
+              }).sort( { $natural: -1 }).limit(100).exec(function (err, events) {
+                if (err) {
+                  res.status(200).json({
+                    success: false,
+                    message: "problem with mongo"
+                  });
+                }
+
+                if (events) {
+                  res.status(200).json({
+                    success: true,
+                    message: "events found",
+                    events: events
+                  });
+                } else {
+                  res.status(200).json({
+                    success: false,
+                    message: "events couldn't be found",
+                  });
+                }
+              }
+            );
+          } else {
+            res.status(200).json({
+              success: false,
+              message: "user has no followers"
+            });
+          }
+        });
+      } else {
+        Event.find({}).sort({ $natural: -1 }).limit(100).exec(function (err, events) {
+          if (err) {
+            res.status(200).json({
+              success: false,
+              message: "problem with mongo"
+            });
+          }
+
+          if (events) {
+            res.status(200).json({
+              success: true,
+              message: "events found",
+              events: events
+            });
+          } else {
+            res.status(200).json({
+              success: false,
+              message: "events couldn't be found",
+            });
+          }
+        });
+      }
     }
   );
 
@@ -424,6 +486,8 @@ module.exports = function(app, passport) {
             User.findByIdAndUpdate(fid, { $inc: { followers: -1 } }, function (err, doc) {
               if (err) { console.log('could not increment followers for', fid); }
             });
+
+            // TODO: Delete follow event
 
             res.status(200).json({
               success: true,
