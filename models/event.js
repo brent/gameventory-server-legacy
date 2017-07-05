@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 
 const eventSchema = new mongoose.Schema({
+  // TODO: reevaluate whether these all need to be strings
   actor: String,
   target: String,
   type: String,

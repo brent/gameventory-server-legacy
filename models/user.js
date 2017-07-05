@@ -8,7 +8,10 @@ const bcrypt = require('bcryptjs');
 const userSchema = new mongoose.Schema({
   //email:    { type: String, unique: true },
   username: { type: String, unique: true },
-  password: String
+  password: String,
+  games: { type: Number, default: 0 },
+  followers: { type: Number, default: 0 },
+  following: { type: Number, default: 0 } 
 });
 
 userSchema.pre('save', function (next) {
