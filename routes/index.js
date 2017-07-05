@@ -369,7 +369,11 @@ module.exports = function(app, passport) {
 
               if (follow) {
                 User.findByIdAndUpdate(follow.uid, { $inc: { following: 1 } }, function (err, doc) {
-                  if (err) { console.log('could not increment followers for', follow.uid); }
+                  if (err) { console.log('could not increment following for', follow.uid); }
+                });
+
+                User.findByIdAndUpdate(follow.fid, { $inc: { followers: 1 } }, function (err, doc) {
+                  if (err) { console.log('could not increment followers for', follow.fid); }
                 });
 
                 let event = new Event({
@@ -412,6 +416,15 @@ module.exports = function(app, passport) {
 
           if (result) {
             result.remove();
+
+            User.findByIdAndUpdate(uid, { $inc: { following: -1 } }, function (err, doc) {
+              if (err) { console.log('could not decrement following for', uid); }
+            });
+
+            User.findByIdAndUpdate(fid, { $inc: { followers: -1 } }, function (err, doc) {
+              if (err) { console.log('could not increment followers for', fid); }
+            });
+
             res.status(200).json({
               success: true,
               message: "user unfollowed"
