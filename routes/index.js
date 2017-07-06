@@ -58,28 +58,42 @@ module.exports = function(app, passport) {
   app.get('/api/v1/users/:username',
     isLoggedIn,
     function (req, res) {
-      Gameventory.findOne({ 'user.username': req.params.username }, function (err, gameventory) {
-        if (err) {
-          res.status(200).json({
-            success: false,
-            message: "mongodb error",
-            error: err
-          });
-        }
+      const username = req.params.username;
+      User
+        .findOne({ username: username }, { password: 0 })
+        .populate({
+          path: 'gameventory',
+          model: 'Gameventory'
+        })
+        .exec(function (err, user) {
+          if (err) {
+            res.status(200).json({
+              success: false,
+              message: "mongodb error",
+              error: err
+            });
+          }
 
-        if (gameventory) {
-          res.status(200).json({
-            success: true,
-            user: gameventory.user,
-            games: gameventory.games
-          });
-        } else {
-          res.status(200).json({
-            success: false,
-            message: "couldn't find gameventory for user"
-          });
+          if (user) {
+            res.status(200).json({
+              success: true,
+              user: {
+                id: user.id,
+                username: user.username,
+                numFollowers: user.followers,
+                numFollowing: user.following,
+                numGames: user.games
+              },
+              games: user.gameventory.games
+            });
+          } else {
+            res.status(200).json({
+              success: false,
+              message: "couldn't find gameventory for user"
+            });
+          }
         }
-      });
+      );
     }
   );
 
@@ -96,9 +110,9 @@ module.exports = function(app, passport) {
         userId:    req.user.id,
         username:  req.user.username,
         token:     req.token
-      }
-    );
-  });
+      });
+    }
+  );
 
   app.post('/api/v1/login',
     passport.authenticate('login', { session: false }),
@@ -109,9 +123,9 @@ module.exports = function(app, passport) {
         userId:    req.user.id,
         username:  req.user.username,
         token:     req.token
-      }
-    );
-  });
+      });
+    }
+  );
 
   app.get('/api/v1/gameventory',
     isLoggedIn,

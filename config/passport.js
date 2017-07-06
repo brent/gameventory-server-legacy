@@ -4,6 +4,8 @@ const LocalStrategy = require('passport-local').Strategy;
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 
+const Gameventory = require('../models/gameventory.js');
+
 module.exports = function(passport) {
   passport.use('signup', new LocalStrategy({
     usernameField:     'username',
@@ -23,16 +25,27 @@ module.exports = function(passport) {
       newUser.username = username;
       newUser.password = password;
 
+      const newGameventory = new Gameventory();
+      newGameventory.user.id = newUser.id;
+      newGameventory.user.username = newUser.username;
+
+      newUser.gameventory = newGameventory.id;
+
       newUser.save(function (err) {
         if (err) { throw err; }
+        newGameventory.save(function (err) {
+          if (err) {
+            req.success = false;
+            req.message = 'user created; gameventory could not be created';
+          } else {
+            req.success = true;
+            req.message = 'user created successfully';
+          }
+          const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET);
+          req.token = token;
 
-        req.success = true;
-        req.message = 'user created successfully';
-
-        const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET);
-        req.token = token;
-
-        return done(null, newUser);
+          return done(null, newUser);
+        });
       });
     });
   }));

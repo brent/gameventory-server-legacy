@@ -11,7 +11,8 @@ const userSchema = new mongoose.Schema({
   password: String,
   games: { type: Number, default: 0 },
   followers: { type: Number, default: 0 },
-  following: { type: Number, default: 0 } 
+  following: { type: Number, default: 0 },
+  gameventory: { type: mongoose.Schema.ObjectId, unique: true }
 });
 
 userSchema.pre('save', function (next) {
