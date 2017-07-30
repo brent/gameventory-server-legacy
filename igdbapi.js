@@ -101,7 +101,7 @@ const IgdbAPI = {
     formattedGameName = formattedGameName.replace(" ", "+");
 
     const fields = "/?fields=name,summary,first_release_date,release_dates,developers,publishers,cover";
-    const limit = "&limit=20";
+    const limit = "&limit=50";
     const offset = "&offset=0";
     const order = "&order=popularity:desc";
     const search = `&search=${formattedGameName}`;
