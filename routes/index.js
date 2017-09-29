@@ -30,7 +30,6 @@ module.exports = function(app, passport) {
   app.get('/api/v1/users',
     isLoggedIn,
     function(req, res) {
-      console.log(req.query.q);
       User.find({ username: { $regex: req.query.q } }, function (err, users) {
         if (err) {
           res.status(200).json({
@@ -107,9 +106,15 @@ module.exports = function(app, passport) {
       res.status(200).json({
         success:   req.success,
         message:   req.message,
-        userId:    req.user.id,
-        username:  req.user.username,
-        token:     req.token
+        token:     req.token,
+        user: {
+          id: req.user.id,
+          username: req.user.username,
+          numFollowers: req.user.followers,
+          numFollowing: req.user.following,
+          numGames: req.user.games
+        },
+        games: req.user.gameventory.games
       });
     }
   );
@@ -120,9 +125,15 @@ module.exports = function(app, passport) {
       res.status(200).json({
         success:   req.success,
         message:   req.message,
-        userId:    req.user.id,
-        username:  req.user.username,
-        token:     req.token
+        token:     req.token,
+        user: {
+          id: req.user.id,
+          username: req.user.username,
+          numFollowers: req.user.followers,
+          numFollowing: req.user.following,
+          numGames: req.user.games
+        },
+        games: req.user.gameventory.games
       });
     }
   );
@@ -196,7 +207,6 @@ module.exports = function(app, passport) {
 
               User.findByIdAndUpdate(userId, { "games": numGames }, function (err, doc) {
                 if (err) { console.log('could not update games count for', userId); }
-                console.log(doc);
               });
 
               res.status(200).json({

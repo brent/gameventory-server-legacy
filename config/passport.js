@@ -13,7 +13,11 @@ module.exports = function(passport) {
     passReqToCallback: true
   }, function(req, username, password, done) {
     User.findOne({ 'username': username }, function(err, user) {
-      if (err) { return done(err); }
+      if (err) { 
+        req.success = false;
+        req.message = "mongo error";
+        return done(null, { user: null });
+      }
 
       if (user) { 
         req.success = false;
@@ -40,11 +44,21 @@ module.exports = function(passport) {
           } else {
             req.success = true;
             req.message = 'user created successfully';
-          }
-          const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET);
-          req.token = token;
 
-          return done(null, newUser);
+            const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET);
+            req.token = token;
+
+            newUser.populate({ path: 'gameventory', model: 'Gameventory' }, function (err, populatedUser) {
+              if (err) { return done(err); }
+              if (!populatedUser) {
+                req.success = false;
+                req.message = 'user gameventory could not be populated';
+                return done(null, { user: null });
+              }
+
+              return done(null, populatedUser);
+            });
+          }
         });
       });
     });
@@ -56,11 +70,18 @@ module.exports = function(passport) {
     passReqToCallback: true
   }, function(req, username, password, done) {
     User.findOne({ 'username': username }, function (err, user) {
-      if (err) { return done(err); }
+      if (err) { 
+        req.success = false;
+        req.message = "mongo error";
+        return done(null, { user: null });
+      }
+
       if (!user) { 
         req.success = false;
         req.message = 'user not found';
-        return done(null, { user: null });
+
+        // TODO: fix this hacky response
+        return done(null, { user: null, gameventory: { } });
       }
 
       user.comparePassword(password)
@@ -72,10 +93,23 @@ module.exports = function(passport) {
             const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
             req.token = token;
 
-            return done(null, user);
+            user.populate({ path: 'gameventory', model: 'Gameventory' }, function (err, populatedUser) {
+              if (err) { 
+                req.success = false;
+                req.message = "mongo error";
+                return done(null, { user: null });
+              }
+              if (!populatedUser) {
+                req.success = false;
+                req.message = 'user gameventory could not be populated';
+                return done(null, { user: null });
+              }
+
+              return done(null, populatedUser);
+            });
           } else {
             req.success = false;
-            req.message = 'user found successfully; passwords do not match';
+            req.message = 'user not found; passwords do not match';
             return done(null, { user: null });
           }
         })
