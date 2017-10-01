@@ -58,41 +58,46 @@ module.exports = function(app, passport) {
     isLoggedIn,
     function (req, res) {
       const username = req.params.username;
-      User
-        .findOne({ username: username }, { password: 0 })
-        .populate({
-          path: 'gameventory',
-          model: 'Gameventory'
-        })
-        .exec(function (err, user) {
-          if (err) {
-            res.status(200).json({
-              success: false,
-              message: "mongodb error",
-              error: err
-            });
-          }
 
-          if (user) {
-            res.status(200).json({
-              success: true,
-              user: {
-                id: user.id,
-                username: user.username,
-                numFollowers: user.followers,
-                numFollowing: user.following,
-                numGames: user.games
-              },
-              games: user.gameventory.games
-            });
-          } else {
-            res.status(200).json({
-              success: false,
-              message: "couldn't find gameventory for user"
-            });
-          }
-        }
-      );
+      Follow.isUserFollowingOther(req.user.username, username)
+        .then(function(isFollowed) {
+          User
+             .findOne({ username: username }, { password: 0 })
+             .populate({
+               path: 'gameventory',
+               model: 'Gameventory'
+             })
+             .exec(function (err, user) {
+               if (err) {
+                 res.status(200).json({
+                   success: false,
+                   message: "mongodb error",
+                   error: err
+                 });
+               }
+
+               if (user) {
+                 res.status(200).json({
+                   success: true,
+                   user: {
+                     id: user.id,
+                     username: user.username,
+                     numFollowers: user.followers,
+                     numFollowing: user.following,
+                     numGames: user.games,
+                     isFollowed: isFollowed
+                   },
+                   games: user.gameventory.games
+                 });
+               } else {
+                 res.status(200).json({
+                   success: false,
+                   message: "couldn't find gameventory for user"
+                 });
+               }
+             }
+           );
+      });
     }
   );
 
