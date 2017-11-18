@@ -366,11 +366,11 @@ module.exports = function(app, passport) {
     }
   );
 
-  app.get('/api/v1/followers',
+  app.get('/api/v1/followers/:username',
     isLoggedIn,
     function (req, res) {
-      const uid = req.user.id;
-      Follow.find({ fid: uid }, function (err, result) {
+      const username = req.params.username;
+      Follow.find({ fUsername: username }, function (err, result) {
         if (err) {
           res.status(200).json({
             success: false,
@@ -395,11 +395,11 @@ module.exports = function(app, passport) {
     }
   );
 
-  app.get('/api/v1/following',
+  app.get('/api/v1/following/:username',
     isLoggedIn,
     function (req, res) {
-      const uid = req.user.id;
-      Follow.find({ uid: uid }, function (err, result) {
+      const username = req.params.username;
+      Follow.find({ uUsername: username }, function (err, result) {
         if (err) {
           res.status(200).json({
             success: false,
