@@ -197,6 +197,7 @@ module.exports = function(app, passport) {
               if (req.body.event) {
                 let event = new Event({
                   actor: req.body.event.actor,
+                  actorUsername: req.body.event.actorUsername,
                   target: req.body.event.target,
                   type: req.body.event.type,
                   message: req.body.event.message
@@ -243,6 +244,7 @@ module.exports = function(app, passport) {
               if (req.body.event) {
                 let event = new Event({
                   actor: req.body.event.actor,
+                  actorUsername: req.body.event.actorUsername,
                   target: req.body.event.target,
                   type: req.body.event.type,
                   message: req.body.event.message
@@ -469,6 +471,7 @@ module.exports = function(app, passport) {
 
                 let event = new Event({
                   actor: follow.uid,
+                  actorUsername: follow.uUsername,
                   target: follow.fid,
                   type: "USER_FOLLOW",
                   message: `${follow.uUsername} is now following ${follow.fUsername}`
