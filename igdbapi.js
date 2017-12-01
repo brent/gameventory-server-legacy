@@ -6,7 +6,7 @@ const Platform = require('./models/platform');
 
 const IgdbAPI = {
 
-  baseURL: "https://igdbcom-internet-game-database-v1.p.mashape.com",
+  baseURL: "https://api-2445582011268.apicast.io",
   searchRoute: "/games",
   platformsRoute: "/platforms",
 
@@ -110,7 +110,7 @@ const IgdbAPI = {
 
     return axios.get(requestURL, {
       headers: {
-        'X-Mashape-Key': 'Mbdgn3uSLGmshtPQy8REhgo185VCp1ACZ71jsn7kHzoUrEj3Ln',
+        'user-key': 'f7ecff83e0339f7108b16e425c9f98b8',
         'Accept': 'application/json'
       }
     })
@@ -149,7 +149,7 @@ const IgdbAPI = {
 
     return axios.get(requestURL, {
       headers: {
-        'X-Mashape-Key': 'Mbdgn3uSLGmshtPQy8REhgo185VCp1ACZ71jsn7kHzoUrEj3Ln',
+        'user-key': 'f7ecff83e0339f7108b16e425c9f98b8',
         'Accept': 'application/json'
       }
     });
