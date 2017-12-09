@@ -536,4 +536,31 @@ module.exports = function(app, passport) {
     }
   );
 
+  app.get('/api/v1/popular', 
+    function(req, res) {
+
+      Gameventory.aggregate([
+        { $addFields: { games: { $objectToArray: "$games" } } }, 
+        { $unwind: "$games" }, 
+        { $addFields: { games: "$games.v" } }, 
+        { $unwind: "$games" }, 
+        { $group: { _id: "$games.igdb_id", game: { $first: "$games" }, count: { $sum: 1 } } },
+        { $sort: { "count": -1 } }
+      ], function(err, result) {
+        if (err) {
+          res.status(200).json({
+            success: false,
+            message: "request unsuccessful"
+          });
+        }
+
+        res.status(200).json({
+          success: true,
+          message: "request successful",
+          games: result
+        });
+      });
+    }
+  );
+
 };
