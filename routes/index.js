@@ -143,6 +143,19 @@ module.exports = function(app, passport) {
     }
   );
 
+  app.get('/api/v1/logout',
+    isLoggedIn,
+    function (req, res) {
+      req.logout();
+      res.status(200).json({
+        success: true,
+        message: "log out successful",
+        user: req.user
+      });
+    }
+  );
+
+
   app.get('/api/v1/gameventory',
     isLoggedIn,
     function (req, res) {
