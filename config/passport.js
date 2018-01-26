@@ -16,13 +16,13 @@ module.exports = function(passport) {
       if (err) { 
         req.success = false;
         req.message = "mongo error";
-        return done(null, { user: null });
+        return done(null, { user: null, gameventory: { } });
       }
 
       if (user) { 
         req.success = false;
         req.message = 'user already exists';
-        return done(null, { user: null });
+        return done(null, { user: null, gameventory: { } });
       }
 
       const newUser = new User();
@@ -53,7 +53,7 @@ module.exports = function(passport) {
               if (!populatedUser) {
                 req.success = false;
                 req.message = 'user gameventory could not be populated';
-                return done(null, { user: null });
+                return done(null, { user: null, gameventory: { } });
               }
 
               return done(null, populatedUser);
