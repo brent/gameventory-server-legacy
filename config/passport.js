@@ -109,8 +109,8 @@ module.exports = function(passport) {
             });
           } else {
             req.success = false;
-            req.message = 'user not found; passwords do not match';
-            return done(null, { user: null });
+            req.message = 'user found; passwords do not match';
+            return done(null, { user: null, gameventory: { } });
           }
         })
         .catch((error) => { console.log(error); });
