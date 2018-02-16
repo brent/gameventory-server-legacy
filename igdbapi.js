@@ -54,23 +54,55 @@ const IgdbAPI = {
     return gamesFindPromise;
   },
   saveSearchResults: function (results) {
-    const gamesData = results.data;
-    let gamesArr = [];
-    for (let i = 0; i < gamesData.length; i++) {
-      let currentGame = gamesData[i];
-      let game = IgdbAPI.createGame(currentGame);
+    const platforms = [];
+    /*
+     * if the platforms are pulled first then
+     * the comparison can happen to an array
+     * in memeory rather than looking up platforms
+     * each time
+     *
+     */
+    Platform.find({ igdb_id: platformsArr[j] }, function (err, p) {
+      if (err) { console.log(err); }
+      if (p) {
+        platforms.push(p[0]);
 
-      Game.findOne({ igdb_id: game.igdb_id }, function (err, g) {
-        if (err) { console.log(err); }
-        if (g) {
-          return;
-        } else {
-          game.save();
+        const gamesData = results.data;
+        let gamesArr = [];
+        const platformsArr = [];
+        for (let i = 0; i < gamesData.length; i++) {
+          let currentGame = gamesData[i];
+          let game = IgdbAPI.createGame(currentGame);
+
+          /* 
+           * this find needs to be much smarter
+           * it should overwrite the game UNLESS
+           * the old game is identical to the api
+           * data returned
+           *
+           */
+          Game.findOne({ igdb_id: game.igdb_id }, function (err, g) {
+            if (err) { console.log(err); }
+            if (g) {
+              return;
+            } else {
+
+              platformsArr = game.platforms
+              game.platforms = [];
+
+              for (let j = 0; j < platformsArr.length; j++) {
+              }
+
+              game.save();
+            }
+          });
+
+          gamesArr.push(game);
         }
-      });
-
-      gamesArr.push(game);
-    }
+      } else {
+        return;
+      }
+    });
 
     return new Promise((resolve, reject) => {
       if (gamesArr.length > 0) {
@@ -79,19 +111,6 @@ const IgdbAPI = {
         reject('error');
       }
     });
-
-    /*
-    return new Promise((resolve, reject) => {
-      // errors on duplicate insert
-      Game.insertMany(gamesArr, { ordered: false })
-      .then(function (docs) {
-        resolve(docs);
-      })
-      .catch(function(err) {
-        reject(err);
-      });
-    });
-    */
   },
   remoteGameSearch: function (gameTitle) {
     const gameName = gameTitle;
