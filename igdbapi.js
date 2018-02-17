@@ -54,18 +54,31 @@ const IgdbAPI = {
     return gamesFindPromise;
   },
   saveSearchResults: function (results) {
-    function findGameAndFillInPlatforms(game, platforms) {
+    function getAllPlatforms() {
       return new Promise((resolve, reject) => {
+        Platform.find({ }, function (err, platforms) {
+          if (err) { reject('Mongo DB error: ' + err); }
+          if (platforms) {
+            resolve(platforms);
+          }
+        });
       });
     }
 
-    function getAllPlatforms() {
+    function findGamesAndFillInPlatforms(games, platforms) {
       return new Promise((resolve, reject) => {
+        // ???
       });
     }
 
     function saveGamesWithPlatforms(games) {
       return new Promise((resolve, reject) => {
+        Game.insertMany(games, function (err, docs) {
+          if (err) { reject('Mongo DB error: ' + err); }
+          if (docs) {
+            resolve(docs);
+          }
+        });
       });
     }
 
@@ -104,9 +117,6 @@ const IgdbAPI = {
 
                 game.save(function (err) {
                   gamesArr.push(game);
-
-                  // somehow know when all games are saved
-                  // and resolve or reject
                 });
               }
             });
