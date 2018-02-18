@@ -127,6 +127,10 @@ module.exports = function(app, passport) {
   app.post('/api/v1/login',
     passport.authenticate('login', { session: false }),
     function (req, res) {
+      if (req.user.gameventory == null) {
+        req.user.gameventory = { };
+      }
+
       res.status(200).json({
         success:   req.success,
         message:   req.message,
