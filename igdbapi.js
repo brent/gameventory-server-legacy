@@ -73,6 +73,11 @@ const IgdbAPI = {
         gamesData.forEach((currentGame, i, arr) => {
           let game = IgdbAPI.createGame(currentGame);
 
+          /* 
+           * this find needs to be much smarter it should overwrite the game UNLESS
+           * the old game is identical to the api data returned
+           *
+           */
           Game.findOne({ igdb_id: game.igdb_id }, (err, g) => {
             if (err) { console.log(err); }
             if (g) {
@@ -89,21 +94,19 @@ const IgdbAPI = {
     }
 
     function fillInPlatforms(games, platforms) {
-      return new Promise((resolve, reject) => {
-        games.forEach(game => {
-          let platformsArr = game.platforms;
-          game.platforms = [];
-          platformsArr.forEach((gamePlatform, j) => {
-            platforms.map(p => {
-              if (platformsArr[j] == p.igdb_id) {
-                game.platforms.push(p);
-              }
-            });
+      games.forEach(game => {
+        let platformsArr = game.platforms;
+        game.platforms = [];
+        platformsArr.forEach((gamePlatform, j) => {
+          platforms.map(p => {
+            if (platformsArr[j] == p.igdb_id) {
+              game.platforms.push(p);
+            }
           });
         });
-
-        resolve(games);
       });
+
+      return games;
     }
 
     function saveGamesWithPlatforms(games) {
@@ -122,8 +125,8 @@ const IgdbAPI = {
     return new Promise((resolve, reject) => {
       Promise.all([getAllPlatforms(), findGames(results)])
         .then(vals => {
-          fillInPlatforms(vals[1], vals[0])
-            .then(saveGamesWithPlatforms)
+          const gamesWithPlatforms = fillInPlatforms(vals[1], vals[0]);
+          saveGamesWithPlatforms(gamesWithPlatforms)
             .then(games => {
               resolve(games);
             })
@@ -133,52 +136,6 @@ const IgdbAPI = {
             });
         });
     });
-
-    /*
-    return new Promise((resolve, reject) => {
-
-      Platform.find({ }, function (err, platforms) {
-        let gamesArr = [];
-
-        if (err) { console.log(err); }
-        if (platforms) {
-
-          const gamesData = results.data;
-          for (let i = 0; i < gamesData.length; i++) {
-            let currentGame = gamesData[i];
-            let game = IgdbAPI.createGame(currentGame);
-
-            /* 
-             * this find needs to be much smarter it should overwrite the game UNLESS
-             * the old game is identical to the api data returned
-             *
-            Game.findOne({ igdb_id: game.igdb_id }, function (err, g) {
-              if (err) { console.log(err); }
-              if (g) {
-                return;
-              } else {
-                let platformsArr = game.platforms;
-                game.platforms = [];
-                platformsArr.forEach((gamePlatform, j) => {
-                  platforms.map(p => {
-                    if (platformsArr[j] == p.igdb_id) {
-                      game.platforms.push(p);
-                    }
-                  });
-                });
-
-                game.save(function (err) {
-                  gamesArr.push(game);
-                });
-              }
-            });
-          }
-        } else {
-          return;
-        }
-      });
-    });
-    */
   },
   remoteGameSearch: function (gameTitle) {
     const gameName = gameTitle;
