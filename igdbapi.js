@@ -73,11 +73,6 @@ const IgdbAPI = {
         gamesData.forEach((currentGame, i, arr) => {
           let game = IgdbAPI.createGame(currentGame);
 
-          /* 
-           * this find needs to be much smarter it should overwrite the game UNLESS
-           * the old game is identical to the api data returned
-           *
-           */
           Game.findOne({ igdb_id: game.igdb_id }, (err, g) => {
             if (err) { console.log(err); }
             if (g) {
@@ -111,12 +106,19 @@ const IgdbAPI = {
 
     function saveGamesWithPlatforms(games) {
       return new Promise((resolve, reject) => {
-        Game.insertMany(games, function (err, docs) {
-          if (err) { reject('Mongo DB error: ' + err); }
-          if (docs) {
-            resolve(docs);
-          } else {
-            reject('games not saved');
+        let savedGames = [];
+        games.forEach((game, i) => {
+          Game.findOneAndUpdate(
+            { igdb_id: game.igdb_id }, 
+            game, 
+            { upsert: true }, (err, doc) => {
+              if (err) { reject('MongoDB error'); }
+          });
+
+          savedGames.push(game);
+
+          if (savedGames.length == (i + 1)) {
+            resolve(savedGames);
           }
         });
       });
