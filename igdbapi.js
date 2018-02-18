@@ -54,44 +54,90 @@ const IgdbAPI = {
     return gamesFindPromise;
   },
   saveSearchResults: function (results) {
-    const gamesData = results.data;
-    let gamesArr = [];
-    for (let i = 0; i < gamesData.length; i++) {
-      let currentGame = gamesData[i];
-      let game = IgdbAPI.createGame(currentGame);
+    function getAllPlatforms() {
+      return new Promise((resolve, reject) => {
+        Platform.find({ }, function (err, platforms) {
+          if (err) { reject('Mongo DB error: ' + err); }
+          if (platforms) {
+            resolve(platforms);
+          }
+        });
+      });
+    }
 
-      Game.findOne({ igdb_id: game.igdb_id }, function (err, g) {
-        if (err) { console.log(err); }
-        if (g) {
-          return;
-        } else {
-          game.save();
-        }
+    function findGames(results) {
+      return new Promise((resolve, reject) => {
+        let gamesArr = [];
+        const gamesData = results.data;
+
+        gamesData.forEach((currentGame, i, arr) => {
+          let game = IgdbAPI.createGame(currentGame);
+
+          Game.findOne({ igdb_id: game.igdb_id }, (err, g) => {
+            if (err) { console.log(err); }
+            if (g) {
+              gamesArr.push(g)
+            } else {
+              gamesArr.push(game);
+            }
+            if (arr.length == (i + 1)) {
+              resolve(gamesArr);
+            } 
+          });
+        });
+      });
+    }
+
+    function fillInPlatforms(games, platforms) {
+      games.forEach(game => {
+        let platformsArr = game.platforms;
+        game.platforms = [];
+        platformsArr.forEach((gamePlatform, j) => {
+          platforms.map(p => {
+            if (platformsArr[j] == p.igdb_id) {
+              game.platforms.push(p);
+            }
+          });
+        });
       });
 
-      gamesArr.push(game);
+      return games;
+    }
+
+    function saveGamesWithPlatforms(games) {
+      return new Promise((resolve, reject) => {
+        let savedGames = [];
+        games.forEach((game, i) => {
+          Game.findOneAndUpdate(
+            { igdb_id: game.igdb_id }, 
+            game, 
+            { upsert: true }, (err, doc) => {
+              if (err) { reject('MongoDB error'); }
+          });
+
+          savedGames.push(game);
+
+          if (savedGames.length == (i + 1)) {
+            resolve(savedGames);
+          }
+        });
+      });
     }
 
     return new Promise((resolve, reject) => {
-      if (gamesArr.length > 0) {
-        resolve(gamesArr);
-      } else {
-        reject('error');
-      }
+      Promise.all([getAllPlatforms(), findGames(results)])
+        .then(vals => {
+          const gamesWithPlatforms = fillInPlatforms(vals[1], vals[0]);
+          saveGamesWithPlatforms(gamesWithPlatforms)
+            .then(games => {
+              resolve(games);
+            })
+            .catch(err => {
+              console.log(err);
+              return;
+            });
+        });
     });
-
-    /*
-    return new Promise((resolve, reject) => {
-      // errors on duplicate insert
-      Game.insertMany(gamesArr, { ordered: false })
-      .then(function (docs) {
-        resolve(docs);
-      })
-      .catch(function(err) {
-        reject(err);
-      });
-    });
-    */
   },
   remoteGameSearch: function (gameTitle) {
     const gameName = gameTitle;
