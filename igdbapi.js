@@ -125,6 +125,30 @@ const IgdbAPI = {
     }
 
     return new Promise((resolve, reject) => {
+      getAllPlatforms()
+        .then((platforms) => {
+          const gamesData = results.data;
+
+          let gamesArr = [];
+          gamesData.forEach(game => {
+            let g = IgdbAPI.createGame(game);
+            gamesArr.push(g);
+          });
+
+          const gamesWithPlatforms = fillInPlatforms(gamesArr, platforms);
+          saveGamesWithPlatforms(gamesWithPlatforms)
+            .then(games => {
+              resolve(games);
+            })
+            .catch(err => {
+              console.log(err);
+              return;
+            });
+        });
+    });
+
+    /*
+    return new Promise((resolve, reject) => {
       Promise.all([getAllPlatforms(), findGames(results)])
         .then(vals => {
           const gamesWithPlatforms = fillInPlatforms(vals[1], vals[0]);
@@ -138,6 +162,7 @@ const IgdbAPI = {
             });
         });
     });
+    */
   },
   remoteGameSearch: function (gameTitle) {
     const gameName = gameTitle;
