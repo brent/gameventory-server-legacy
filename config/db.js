@@ -2,7 +2,7 @@
 
 const mongoose = require('mongoose');
 
-mongoose.connect('mongodb://localhost/gameventory', {
+mongoose.connect('mongodb://127.0.0.1/gameventory', {
   user: process.env.DB_USER,
   pass: process.env.DB_PASS
 });
