@@ -212,12 +212,18 @@ module.exports = function(app, passport) {
 
             if (updatedGameventory) {
               if (req.body.event) {
+
                 let event = new Event({
-                  actor: req.body.event.actor,
-                  actorUsername: req.body.event.actorUsername,
-                  target: req.body.event.target,
-                  type: req.body.event.type,
-                  message: req.body.event.message
+                  actor: {
+                    id:       req.body.event.actor.id,
+                    username: req.body.event.actor.username
+                  },
+                  target: {
+                    obj: req.body.event.target.type,
+                    id:   req.body.event.target.id,
+                    name: req.body.event.target.name
+                  },
+                  type: req.body.event.type
                 });
 
                 event.save(function (err, savedEvent) {
@@ -259,12 +265,18 @@ module.exports = function(app, passport) {
 
             if (newGameventory) {
               if (req.body.event) {
+
                 let event = new Event({
-                  actor: req.body.event.actor,
-                  actorUsername: req.body.event.actorUsername,
-                  target: req.body.event.target,
-                  type: req.body.event.type,
-                  message: req.body.event.message
+                  actor: {
+                    id:       req.body.event.actor.id,
+                    username: req.body.event.actor.username
+                  },
+                  target: {
+                    obj: req.body.event.target.type,
+                    id:   req.body.event.target.id,
+                    name: req.body.event.target.name
+                  },
+                  type: req.body.event.type
                 });
 
                 event.save(function (err, savedEvent) {
@@ -311,6 +323,7 @@ module.exports = function(app, passport) {
 
           if (follows) {
             let followsArr = [];
+            followsArr.push(uid);
             follows.forEach(function (follow) {
               followsArr.push(follow.fid);
             });
@@ -320,13 +333,19 @@ module.exports = function(app, passport) {
                   { 
                     $and: [ 
                       { type: { $regex: /FOLLOW/ } }, 
-                      { target: { $in: followsArr }, actor: { $ne: uid } } 
+                      { 'target.id': { $ne: uid }, 'actor.id': { $in: followsArr } } 
+                    ]
+                  },
+                  { 
+                    $and: [ 
+                      { type: { $regex: /FOLLOW/ } }, 
+                      { 'target.id': { $in: followsArr }, 'actor.id': { $ne: uid } } 
                     ]
                   },
                   { 
                     $and: [
                       { type: { $regex: /GAME/ } },
-                      { actor: { $ne: uid } }
+                      { 'actor.id': { $in: followsArr } }
                     ]
                   }
                 ]
@@ -487,11 +506,16 @@ module.exports = function(app, passport) {
                 });
 
                 let event = new Event({
-                  actor: follow.uid,
-                  actorUsername: follow.uUsername,
-                  target: follow.fid,
-                  type: "USER_FOLLOW",
-                  message: `${follow.uUsername} is now following ${follow.fUsername}`
+                  actor: {
+                    id: follow.uid,
+                    username: follow.uUsername
+                  },
+                  target: {
+                    obj: "user",
+                    id: follow.fid,
+                    name: follow.fUsername
+                  },
+                  type: "USER_FOLLOW"
                 });
 
                 event.save(function (err, savedEvent) {
