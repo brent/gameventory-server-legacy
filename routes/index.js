@@ -30,7 +30,7 @@ module.exports = function(app, passport) {
   app.get('/api/v1/users',
     isLoggedIn,
     function(req, res) {
-      User.find({ username: { $regex: req.query.q } }, function (err, users) {
+      User.find({ username: { $regex: req.query.q } }, { password: 0 }, function (err, users) {
         if (err) {
           res.status(200).json({
             success: false,
@@ -62,7 +62,7 @@ module.exports = function(app, passport) {
       Follow.isUserFollowingOther(req.user.username, username)
         .then(function(isFollowed) {
           User
-             .findOne({ username: username }, { password: 0 })
+             .findOne({ username: username })
              .populate({
                path: 'gameventory',
                model: 'Gameventory'

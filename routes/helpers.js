@@ -41,7 +41,7 @@ const routeHelpers = {
 
         req.user = user;
         return next();
-      });
+      }).select('-password');
     });
   }
 };
