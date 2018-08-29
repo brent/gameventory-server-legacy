@@ -28,6 +28,7 @@ module.exports = function(passport) {
       const newUser = new User();
       newUser.username = username;
       newUser.password = password;
+      newUser.email    = req.body.email;
 
       const newGameventory = new Gameventory();
       newGameventory.user.id = newUser.id;
