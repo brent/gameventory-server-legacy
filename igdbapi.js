@@ -4,6 +4,23 @@ const axios = require('axios');
 const Game = require('./models/game');
 const Platform = require('./models/platform');
 
+const Regions = [
+  { "value": 1,  "name": "Europe",        "abbr": "EU"  },
+  { "value": 2,  "name": "North America", "abbr": "NA"  },
+  { "value": 3,  "name": "Australia",     "abbr": "AU"  },
+  { "value": 4,  "name": "New Zealand",   "abbr": "NZ"  },
+  { "value": 5,  "name": "Japan",         "abbr": "JP"  },
+  { "value": 6,  "name": "China",         "abbr": "CH"  },
+  { "value": 7,  "name": "Asia",          "abbr": "AS"  },
+  { "value": 8,  "name": "Worldwide",     "abbr": null  },
+  { "value": 9,  "name": "Hong Kong",     "abbr": "HK"  },
+  { "value": 10, "name": "South Korea",   "abbr": "KR"  },
+];
+
+const regionToIndex = (region) => {
+  return --region;
+};
+
 const IgdbAPI = {
 
   baseURL: "https://api-2445582011268.apicast.io",
@@ -88,14 +105,34 @@ const IgdbAPI = {
       });
     }
 
-    function fillInPlatforms(games, platforms) {
+    function fillInPlatformsAndReleaseDates(games, platforms) {
       games.forEach(game => {
         let platformsArr = game.platforms;
+        let releaseDatesArr = game.igdb_release_dates;
+
         game.platforms = [];
+        game.release_dates = [];
+
         platformsArr.forEach((gamePlatform, j) => {
           platforms.map(p => {
             if (platformsArr[j] == p.igdb_id) {
               game.platforms.push(p);
+            }
+          });
+        });
+
+        releaseDatesArr.forEach((releaseDate, j) => {
+          platforms.map(p => {
+            if (releaseDate.platform == p.igdb_id) {
+              let date = new Date(releaseDate.date);
+              let region = releaseDate.region;
+
+              game.release_dates.push({
+                "date": releaseDate.date,
+                "human": date.toLocaleDateString(),
+                "platform": p.igdb_name,
+                "region": Regions[regionToIndex(region)],
+              });
             }
           });
         });
@@ -135,7 +172,7 @@ const IgdbAPI = {
             gamesArr.push(g);
           });
 
-          const gamesWithPlatforms = fillInPlatforms(gamesArr, platforms);
+          const gamesWithPlatforms = fillInPlatformsAndReleaseDates(gamesArr, platforms);
           saveGamesWithPlatforms(gamesWithPlatforms)
             .then(games => {
               resolve(games);
@@ -146,23 +183,6 @@ const IgdbAPI = {
             });
         });
     });
-
-    /*
-    return new Promise((resolve, reject) => {
-      Promise.all([getAllPlatforms(), findGames(results)])
-        .then(vals => {
-          const gamesWithPlatforms = fillInPlatforms(vals[1], vals[0]);
-          saveGamesWithPlatforms(gamesWithPlatforms)
-            .then(games => {
-              resolve(games);
-            })
-            .catch(err => {
-              console.log(err);
-              return;
-            });
-        });
-    });
-    */
   },
   remoteGameSearch: function (gameTitle) {
     const gameName = gameTitle;
@@ -188,11 +208,14 @@ const IgdbAPI = {
   },
   createGame: function (gameData) {
     let platforms = new Set();
+
     if (gameData.release_dates) {
       for(let i = 0; i < gameData.release_dates.length; i++) {
-        platforms.add(gameData.release_dates[i].platform);
+        let release = gameData.release_dates[i]
+        platforms.add(release.platform);
       }
     }
+
     const platformsArr = [...platforms];
 
     let game = new Game({
@@ -206,7 +229,7 @@ const IgdbAPI = {
       igdb_developers:          gameData.developers,
       igdb_publishers:          gameData.publishers,
       igdb_cover:               gameData.cover,
-      platforms:                platformsArr
+      platforms:                platformsArr,
     });
 
     return game;

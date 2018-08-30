@@ -15,6 +15,7 @@ const gameSchema = new mongoose.Schema({
   igdb_publishers:          [],
   igdb_cover:               {},
   platforms:                [],
+  release_dates:            [],
 });
 
 module.exports = mongoose.model('Game', gameSchema);
