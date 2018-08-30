@@ -191,13 +191,14 @@ const IgdbAPI = {
     formattedGameName = formattedGameName.toLowerCase();
     formattedGameName = formattedGameName.replace(" ", "+");
 
-    const fields = "/?fields=name,summary,first_release_date,release_dates,developers,publishers,cover";
+    const fields = "/?fields=name,summary,first_release_date,release_dates,developers,publishers,cover,platforms,category,time_to_beat,game_modes,genres,status,screenshots,videos,esrb,pegi,websites,dlcs,expansions,standalone_expansions,bundles,artworks,aggregated_rating";
+    const expand = "&expand=platforms,publishers,developers,genres,themes,game_modes";
     const limit = "&limit=50";
     const offset = "&offset=0";
     const order = "&order=popularity:desc";
     const search = `&search=${formattedGameName}`;
 
-    const requestURL = `${IgdbAPI.baseURL}${IgdbAPI.searchRoute}${fields}${limit}${offset}${search}`;
+    const requestURL = `${IgdbAPI.baseURL}${IgdbAPI.searchRoute}${fields}${expand}${search}`;
 
     return axios.get(requestURL, {
       headers: {
@@ -219,17 +220,37 @@ const IgdbAPI = {
     const platformsArr = [...platforms];
 
     let game = new Game({
-      igdb_id:                  gameData.id,
-      igdb_name:                gameData.name,
-      igdb_slug:                gameData.slug,
-      igdb_first_release_date:  gameData.first_release_date,
-      igdb_release_date:        gameData.release_date,
-      igdb_summary:             gameData.summary,
-      igdb_release_dates:       gameData.release_dates,
-      igdb_developers:          gameData.developers,
-      igdb_publishers:          gameData.publishers,
-      igdb_cover:               gameData.cover,
-      platforms:                platformsArr,
+      igdb_id:                      gameData.id,
+      igdb_name:                    gameData.name,
+      igdb_slug:                    gameData.slug,
+      igdb_first_release_date:      gameData.first_release_date,
+      igdb_release_date:            gameData.release_date,
+      igdb_summary:                 gameData.summary,
+      igdb_release_dates:           gameData.release_dates,
+      igdb_developers:              gameData.developers,
+      igdb_publishers:              gameData.publishers,
+      igdb_cover:                   gameData.cover,
+      igdb_platforms:               gameData.platforms,
+      igdb_category:                gameData.category,
+      igdb_time_to_beat:            gameData.time_to_beat,
+      igdb_game_modes:              gameData.game_modes,
+      igdb_themes:                  gameData.themes,
+      igdb_genres:                  gameData.genres,
+      igdb_status:                  gameData.status,
+      igdb_alternative_name:        gameData.alternative_name,
+      igdb_screenshots:             gameData.screenshots,
+      igdb_videos:                  gameData.videos,
+      igdb_esrb:                    gameData.esrb,
+      igdb_pegi:                    gameData.pegi,
+      igdb_websites:                gameData.websites,
+      igdb_dlcs:                    gameData.dlcs,
+      igdb_expansions:              gameData.expansions,
+      igdb_standalone_expansions:   gameData.standalone_expansions,
+      igdb_bundles:                 gameData.bundles,
+      igdb_games:                   gameData.games,
+      igdb_artworks:                gameData.artworks,
+      igdb_aggregated_rating:       gameData.aggregated_rating,
+      platforms:                    platformsArr,
     });
 
     return game;
